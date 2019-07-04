@@ -63,13 +63,12 @@ import javax.crypto.SecretKey;
 @SuppressWarnings("deprecation")
 @TargetApi(Build.VERSION_CODES.M)
 public class FingerprintDialogCompatV23 extends DialogFragment {
-    private static final String KEY_NAME = UUID.randomUUID().toString();
-
     // Keys of the arguments.
     private static final String ARG_TITLE = "arg_title";
     private static final String ARG_SUBTITLE = "arg_subtitle";
     private static final String ARG_NEGATIVE_BUTTON_TITLE = "arg_negative_button_title";
     private static final String ARG_DESCRIPTION = "arg_description";
+    private static final String ARG_CRYPTO_OBJECT_GENERATOR = "arg_crypto_object_generator";
 
     /**
      * {@link Context} of the activity with witch this dialog is attached.
@@ -77,10 +76,10 @@ public class FingerprintDialogCompatV23 extends DialogFragment {
     private Context mContext;
 
     /**
-     * {@link KeyStore} for holding the fingerprint authentication key.
+     * CryptoObjectGenerator to generate new crypto objects
      */
-    private KeyStore mKeyStore;
-    private Cipher mCipher;
+    private CryptoObjectGenerator mCryptoObjectGenerator;
+
     /**
      * Fingerprint scanning is currently running.
      */
@@ -111,12 +110,14 @@ public class FingerprintDialogCompatV23 extends DialogFragment {
      * @param description         Description to display on the dialog. Only first four lines of the
      *                            description will be displayed.
      * @param negativeButtonTitle Title of the negative/cancel button on the dialog.
+     * @param cryptoObjectGenerator The generator for new crypto objects
      * @return {@link FingerprintDialogCompatV23}
      */
     static FingerprintDialogCompatV23 createDialog(@NonNull String title,
                                                    @NonNull String subtitle,
                                                    @NonNull String description,
-                                                   @NonNull String negativeButtonTitle) {
+                                                   @NonNull String negativeButtonTitle,
+                                                   @NonNull CryptoObjectGenerator cryptoObjectGenerator) {
         FingerprintDialogCompatV23 fingerprintDialogCompat = new FingerprintDialogCompatV23();
 
         //Set the arguments
@@ -125,6 +126,7 @@ public class FingerprintDialogCompatV23 extends DialogFragment {
         bundle.putString(ARG_SUBTITLE, subtitle);
         bundle.putString(ARG_DESCRIPTION, description);
         bundle.putString(ARG_NEGATIVE_BUTTON_TITLE, negativeButtonTitle);
+        bundle.putSerializable(ARG_CRYPTO_OBJECT_GENERATOR, cryptoObjectGenerator);
         fingerprintDialogCompat.setArguments(bundle);
 
         return fingerprintDialogCompat;
@@ -260,6 +262,12 @@ public class FingerprintDialogCompatV23 extends DialogFragment {
             throw new IllegalStateException("Description cannot be null.");
         }
 
+        if (getArguments().containsKey(ARG_CRYPTO_OBJECT_GENERATOR)) {
+            mCryptoObjectGenerator = (CryptoObjectGenerator) getArguments().getSerializable(ARG_CRYPTO_OBJECT_GENERATOR);
+        } else {
+            throw new IllegalStateException("Crypto object generator cannot be null");
+        }
+
         //Set the application drawable.
         try {
             AppCompatImageView appIconIv = view.findViewById(R.id.app_icon_iv);
@@ -272,83 +280,6 @@ public class FingerprintDialogCompatV23 extends DialogFragment {
         mStatusText = view.findViewById(R.id.fingerprint_status_tv);
     }
 
-    /**
-     * Generate authentication key.
-     *
-     * @return true if the key generated successfully.
-     */
-    @TargetApi(Build.VERSION_CODES.M)
-    private boolean generateKey() {
-        mKeyStore = null;
-        KeyGenerator keyGenerator;
-
-        //Get the instance of the key store.
-        try {
-            mKeyStore = KeyStore.getInstance("AndroidKeyStore");
-            keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
-        } catch (NoSuchAlgorithmException | NoSuchProviderException | KeyStoreException e) {
-            return false;
-        }
-
-        //generate key.
-        try {
-            mKeyStore.load(null);
-            keyGenerator.init(new
-                    KeyGenParameterSpec.Builder(KEY_NAME,
-                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
-                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                    .setUserAuthenticationRequired(true)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
-                    .build());
-            keyGenerator.generateKey();
-
-            return true;
-        } catch (NoSuchAlgorithmException
-                | InvalidAlgorithmParameterException
-                | CertificateException
-                | IOException e) {
-            return false;
-        }
-    }
-
-    @TargetApi(Build.VERSION_CODES.M)
-    @Nullable
-    private FingerprintManager.CryptoObject getCryptoObject() {
-        return cipherInit() ? new FingerprintManager.CryptoObject(mCipher) : null;
-    }
-
-    /**
-     * Initialize the cipher.
-     *
-     * @return true if the initialization is successful.
-     */
-    @TargetApi(Build.VERSION_CODES.M)
-    private boolean cipherInit() {
-        boolean isKeyGenerated = generateKey();
-
-        if (!isKeyGenerated) return false;
-
-        try {
-            mCipher = Cipher.getInstance(
-                    KeyProperties.KEY_ALGORITHM_AES + "/"
-                            + KeyProperties.BLOCK_MODE_CBC + "/"
-                            + KeyProperties.ENCRYPTION_PADDING_PKCS7);
-        } catch (NoSuchAlgorithmException |
-                NoSuchPaddingException e) {
-            return false;
-        }
-
-        try {
-            mKeyStore.load(null);
-            SecretKey key = (SecretKey) mKeyStore.getKey(KEY_NAME, null);
-            mCipher.init(Cipher.ENCRYPT_MODE, key);
-            return true;
-        } catch (KeyStoreException | CertificateException
-                | UnrecoverableKeyException | IOException
-                | NoSuchAlgorithmException | InvalidKeyException e) {
-            return false;
-        }
-    }
 
 
     /**
@@ -373,7 +304,7 @@ public class FingerprintDialogCompatV23 extends DialogFragment {
             return;
         }
 
-        final FingerprintManager.CryptoObject cryptoObject = getCryptoObject();
+        final FingerprintManager.CryptoObject cryptoObject = mCryptoObjectGenerator.getFingerprintCryptoObject();
         if (cryptoObject != null) {
             final FingerprintManager.AuthenticationCallback authCallback = new FingerprintManager.AuthenticationCallback() {
                 @Override

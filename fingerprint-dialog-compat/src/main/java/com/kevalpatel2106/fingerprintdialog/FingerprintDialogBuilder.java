@@ -61,12 +61,28 @@ public class FingerprintDialogBuilder {
     private String mButtonTitle;
 
     /**
+     * CryptoObjectGenerator for generating new crypto objects
+     */
+    private CryptoObjectGenerator mCryptoObjectGenerator;
+
+    /**
      * Public constructor.
      *
      * @param context {@link Context} of the caller.
      */
     public FingerprintDialogBuilder(@NonNull final Context context) {
+        this(context, new DefaultCryptoObjectGenerator());
+    }
+
+    /**
+     * Public constructor.
+     *
+     * @param context {@link Context} of the caller.
+     * @param cryptoObjectGenerator CryptoObjectGenerator used to generate crypto objects
+     */
+    public FingerprintDialogBuilder(@NonNull final Context context, @NonNull final CryptoObjectGenerator cryptoObjectGenerator) {
         mContext = context;
+        mCryptoObjectGenerator = cryptoObjectGenerator;
     }
 
     /**
@@ -218,7 +234,7 @@ public class FingerprintDialogBuilder {
             showFingerprintDialog(authenticationCallback);
         } else {
             final FingerprintDialogCompatV23 fingerprintDialogCompat = FingerprintDialogCompatV23
-                    .createDialog(mTitle, mSubTitle, mDescription, mButtonTitle);
+                    .createDialog(mTitle, mSubTitle, mDescription, mButtonTitle, mCryptoObjectGenerator);
             fingerprintDialogCompat.setAuthenticationCallback(authenticationCallback);
             fingerprintDialogCompat.show(fragmentManager, FingerprintDialogCompatV23.class.getName());
         }
@@ -239,7 +255,8 @@ public class FingerprintDialogBuilder {
                             }
                         })
                 .build()
-                .authenticate(new CancellationSignal(),
+                .authenticate(mCryptoObjectGenerator.getBiometricCryptoObject(),
+                        new CancellationSignal(),
                         mContext.getMainExecutor(),
                         new AuthenticationCallbackV28(authenticationCallback));
     }
