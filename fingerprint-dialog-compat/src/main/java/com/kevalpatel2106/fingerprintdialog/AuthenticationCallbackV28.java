@@ -16,7 +16,7 @@ package com.kevalpatel2106.fingerprintdialog;
 import android.annotation.TargetApi;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Build;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Created by Keval on 08/04/18.

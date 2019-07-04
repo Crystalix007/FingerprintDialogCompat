@@ -16,8 +16,8 @@ package com.kevalpatel2106.fingerprintdialog;
 import android.content.Context;
 import android.content.Intent;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.v4.hardware.fingerprint.FingerprintManagerCompat;
+import androidx.annotation.NonNull;
+import androidx.core.hardware.fingerprint.FingerprintManagerCompat;
 
 /**
  * Created by Keval on 08/04/18.

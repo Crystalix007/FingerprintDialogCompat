@@ -15,7 +15,7 @@ package com.kevalpatel2106.fingerprintdialog;
 
 import android.annotation.SuppressLint;
 import android.hardware.fingerprint.FingerprintManager;
-import android.support.annotation.IntDef;
+import androidx.annotation.IntDef;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

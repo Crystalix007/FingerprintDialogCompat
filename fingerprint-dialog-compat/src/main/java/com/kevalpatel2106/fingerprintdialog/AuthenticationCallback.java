@@ -14,7 +14,8 @@
 package com.kevalpatel2106.fingerprintdialog;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
+
+import androidx.annotation.Nullable;
 
 /**
  * Created by Keval on 08/04/18.
