@@ -10,6 +10,9 @@ import android.security.keystore.KeyProperties;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
@@ -124,5 +127,14 @@ class DefaultCryptoObjectGenerator implements CryptoObjectGenerator {
     @Override
     public BiometricPrompt.CryptoObject getBiometricCryptoObject() {
         return cipherInit() ? new BiometricPrompt.CryptoObject(mCipher) : null;
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    }
+
+    private void readObjectNoData() throws ObjectStreamException {
     }
 }

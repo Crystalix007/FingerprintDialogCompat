@@ -223,7 +223,7 @@ public class FingerprintDialogBuilder {
         }
 
         //Check if there are any fingerprints enrolled?
-        if (!FingerprintUtils.isFingerprintEnroled(mContext)) {
+        if (!FingerprintUtils.isFingerprintEnrolled(mContext)) {
             authenticationCallback.hasNoFingerprintEnrolled();
             return;
         }

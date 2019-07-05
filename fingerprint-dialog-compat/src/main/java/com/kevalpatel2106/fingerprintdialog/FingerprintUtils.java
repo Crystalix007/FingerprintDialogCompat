@@ -47,7 +47,7 @@ public class FingerprintUtils {
         return fingerprintManager.isHardwareDetected();
     }
 
-    public static boolean isFingerprintEnroled(@NonNull final Context context) {
+    public static boolean isFingerprintEnrolled(@NonNull final Context context) {
         FingerprintManagerCompat fingerprintManager = FingerprintManagerCompat.from(context);
         return fingerprintManager.hasEnrolledFingerprints();
     }
